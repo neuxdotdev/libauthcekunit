@@ -1,0 +1,32 @@
+[package]
+name = "libauthcekunit"
+version = "2.0.0"
+edition = "2021"
+description = "Super robust CSRF token extractor with configurable retry, logging, and strict validation"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+backoff = "0.4.0"
+chrono = "0.4.44"
+dotenv = "0.15.0"
+once_cell = "1.21.4"
+regex = "1.12.3"
+reqwest = { version = "0.13.3", features = ["blocking", "cookies", "rustls"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+serde_urlencoded = "0.7.1"
+thiserror = "2.0.18"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+url = "2.5.8"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[features]
+default = ["rustls"]
+rustls = ["reqwest/rustls"]
+native-tls = ["reqwest/native-tls"]
