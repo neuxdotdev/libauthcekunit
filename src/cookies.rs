@@ -40,10 +40,12 @@ impl Cookie {
         };
         for attr in &parts[1..] {
             if let Some(eq_pos) = attr.find('=') {
-                let key = attr[..eq_pos].to_lowercase();
-                let val = attr[eq_pos + 1..].to_string();
+                let key = attr[..eq_pos].trim().to_lowercase();
+                let val = attr[eq_pos + 1..].trim().to_string();
                 match key.as_str() {
-                    "domain" => cookie.domain = Some(val),
+                    "domain" => {
+                        cookie.domain = Some(val.trim_start_matches('.').to_string());
+                    }
                     "path" => cookie.path = Some(val),
                     "expires" => {
                         if let Ok(exp) = DateTime::parse_from_rfc2822(&val) {
@@ -55,15 +57,17 @@ impl Cookie {
                     "max-age" => {
                         if let Ok(secs) = val.parse::<i64>() {
                             cookie.expires = Some(
-                                SystemTime::now() + std::time::Duration::from_secs(secs as u64),
+                                SystemTime::now()
+                                    .checked_add(std::time::Duration::from_secs(secs as u64))
+                                    .unwrap_or(SystemTime::now()),
                             );
                         }
                     }
-                    "samesite" => cookie.same_site = Some(val),
+                    "samesite" => cookie.same_site = Some(val.to_lowercase()),
                     _ => {}
                 }
             } else {
-                let key = attr.to_lowercase();
+                let key = attr.trim().to_lowercase();
                 match key.as_str() {
                     "secure" => cookie.secure = true,
                     "httponly" => cookie.http_only = true,
@@ -77,7 +81,14 @@ impl Cookie {
             }
         }
         if cookie.path.is_none() {
-            cookie.path = Some("/".to_string());
+            cookie.path = Some(
+                request_url
+                    .path()
+                    .rsplit_once('/')
+                    .map(|(dir, _)| if dir.is_empty() { "/" } else { dir })
+                    .unwrap_or("/")
+                    .to_string(),
+            );
         }
         if let Some(exp) = cookie.expires {
             if SystemTime::now() >= exp {
@@ -87,17 +98,32 @@ impl Cookie {
         Some(cookie)
     }
     pub fn matches(&self, url: &url::Url) -> bool {
-        if let Some(domain) = &self.domain {
-            if let Some(host) = url.host_str() {
-                if !host.ends_with(domain) {
-                    return false;
-                }
+        if let Some(exp) = self.expires {
+            if SystemTime::now() >= exp {
+                return false;
+            }
+        }
+        if let Some(ref domain) = self.domain {
+            let host = match url.host_str() {
+                Some(h) => h,
+                None => return false,
+            };
+            if host == domain {
+            } else if host.ends_with(&format!(".{}", domain)) {
             } else {
                 return false;
             }
         }
-        if let Some(path) = &self.path {
-            if !url.path().starts_with(path) {
+        if let Some(ref path) = self.path {
+            let request_path = url.path();
+            if request_path == path {
+            } else if request_path.starts_with(path) {
+                if !path.ends_with('/')
+                    && request_path.as_bytes().get(path.len()) != Some(&b'/')
+                {
+                    return false;
+                }
+            } else {
                 return false;
             }
         }
@@ -131,7 +157,10 @@ impl CookieJar {
         }
     }
     pub fn get_cookies_for_url(&self, url: &url::Url) -> Vec<&Cookie> {
-        self.cookies.values().filter(|c| c.matches(url)).collect()
+        self.cookies
+            .values()
+            .filter(|c| c.matches(url))
+            .collect()
     }
     pub fn cookie_header(&self, url: &url::Url) -> String {
         let cookies = self.get_cookies_for_url(url);
@@ -146,7 +175,8 @@ impl CookieJar {
     }
     pub fn load_from_file(path: &str) -> std::io::Result<Self> {
         let data = std::fs::read_to_string(path)?;
-        let jar = serde_json::from_str(&data)?;
+        let mut jar: Self = serde_json::from_str(&data)?;
+        jar.clear_expired(); 
         Ok(jar)
     }
     pub fn save_to_file(&self, path: &str) -> std::io::Result<()> {
@@ -179,14 +209,101 @@ mod tests {
         assert_eq!(cookie.path, Some("/".to_string()));
         assert!(cookie.http_only);
         assert!(cookie.secure);
-        assert_eq!(cookie.same_site, Some("Lax".to_string()));
+        assert_eq!(cookie.same_site, Some("lax".to_string()));
     }
     #[test]
-    fn test_cookie_jar() {
-        let mut jar = CookieJar::new();
-        let url = Url::parse("http://example.com").unwrap();
-        jar.add_from_set_cookie("foo=bar; Path=/", &url);
-        let header = jar.cookie_header(&url);
-        assert_eq!(header, "foo=bar");
+    fn test_domain_matching_rfc() {
+        let cookie = Cookie {
+            name: "test".into(),
+            value: "1".into(),
+            domain: Some("example.com".into()),
+            path: Some("/".into()),
+            expires: None,
+            secure: false,
+            http_only: false,
+            same_site: None,
+        };
+        assert!(cookie.matches(&Url::parse("http://example.com/").unwrap()));
+        assert!(cookie.matches(&Url::parse("http://sub.example.com/").unwrap()));
+        assert!(!cookie.matches(&Url::parse("http://notexample.com/").unwrap()));
+    }
+    #[test]
+    fn test_path_matching() {
+        let cookie = Cookie {
+            name: "test".into(),
+            value: "1".into(),
+            domain: None,
+            path: Some("/foo".into()),
+            expires: None,
+            secure: false,
+            http_only: false,
+            same_site: None,
+        };
+        assert!(cookie.matches(&Url::parse("http://x.com/foo").unwrap()));
+        assert!(cookie.matches(&Url::parse("http://x.com/foo/bar").unwrap()));
+        assert!(!cookie.matches(&Url::parse("http://x.com/foobar").unwrap()));
+    }
+    #[test]
+    fn test_secure_only() {
+        let cookie = Cookie {
+            name: "test".into(),
+            value: "1".into(),
+            domain: None,
+            path: None,
+            expires: None,
+            secure: true,
+            http_only: false,
+            same_site: None,
+        };
+        assert!(!cookie.matches(&Url::parse("http://x.com/").unwrap()));
+        assert!(cookie.matches(&Url::parse("https://x.com/").unwrap()));
+    }
+    #[test]
+    fn test_expired_cookie_rejected() {
+        let cookie = Cookie {
+            name: "test".into(),
+            value: "1".into(),
+            domain: None,
+            path: None,
+            expires: Some(SystemTime::now() - std::time::Duration::from_secs(3600)),
+            secure: false,
+            http_only: false,
+            same_site: None,
+        };
+        assert!(!cookie.matches(&Url::parse("http://x.com/").unwrap()));
+    }
+    #[test]
+    fn test_jar_clears_expired_on_load() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        let jar = CookieJar {
+            cookies: {
+                let mut m = HashMap::new();
+                m.insert(
+                    "expired".into(),
+                    Cookie {
+                        name: "expired".into(),
+                        value: "x".into(),
+                        domain: None,
+                        path: None,
+                        expires: Some(SystemTime::now() - std::time::Duration::from_secs(1)),
+                        secure: false,
+                        http_only: false,
+                        same_site: None,
+                    },
+                );
+                m
+            },
+        };
+        serde_json::to_writer(&mut tmp, &jar).unwrap();
+        let path = tmp.path().to_str().unwrap();
+        let loaded = CookieJar::load_from_file(path).unwrap();
+        assert!(loaded.cookies.is_empty());
+    }
+    #[test]
+    fn test_default_path_from_url() {
+        let url = Url::parse("http://example.com/foo/bar").unwrap();
+        let header = "c=1";
+        let cookie = Cookie::from_set_cookie(header, &url).unwrap();
+        assert_eq!(cookie.path.as_deref(), Some("/foo"));
     }
 }
