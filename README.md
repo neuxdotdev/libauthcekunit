@@ -5,11 +5,11 @@
 <p align="center">
   <a href="https://crates.io/crates/libauthcekunit"><img src="https://img.shields.io/crates/v/libauthcekunit.svg?style=flat-square&logo=rust" alt="crates.io version"></a>
   <a href="https://docs.rs/libauthcekunit"><img src="https://img.shields.io/docsrs/libauthcekunit?style=flat-square&logo=docsdotrs" alt="docs.rs"></a>
-  <a href="https://github.com/yourusername/libauthcekunit/blob/main/LICENSE"><img src="https://img.shields.io/crates/l/libauthcekunit?style=flat-square" alt="license"></a>
-  <a href="https://github.com/yourusername/libauthcekunit/actions"><img src="https://img.shields.io/github/actions/workflow/status/yourusername/libauthcekunit/ci.yml?branch=main&style=flat-square&logo=github" alt="build"></a>
+  <a href="https://github.com/neuxdotdev/libauthcekunit/blob/main/LICENSE"><img src="https://img.shields.io/crates/l/libauthcekunit?style=flat-square" alt="license"></a>
+  <a href="https://github.com/neuxdotdev/libauthcekunit/actions"><img src="https://img.shields.io/github/actions/workflow/status/neuxdotdev/libauthcekunit/ci.yml?branch=main&style=flat-square&logo=github" alt="build"></a>
   <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.70%2B-blue?style=flat-square&logo=rust" alt="Rust version"></a>
   <a href="https://crates.io/crates/reqwest"><img src="https://img.shields.io/badge/http-reqwest-orange?style=flat-square" alt="reqwest"></a>
-  <a href="https://github.com/yourusername/libauthcekunit"><img src="https://img.shields.io/badge/C_FFI-available-success?style=flat-square&logo=c" alt="C FFI"></a>
+  <a href="https://github.com/neuxdotdev/libauthcekunit"><img src="https://img.shields.io/badge/C_FFI-available-success?style=flat-square&logo=c" alt="C FFI"></a>
   <a href="https://www.conventionalcommits.org"><img src="https://img.shields.io/badge/conventional%20commits-1.0.0-yellow.svg?style=flat-square" alt="Conventional Commits"></a>
 </p>
 
@@ -104,7 +104,7 @@ libauthcekunit = { version = "2.0.0", default-features = false, features = ["nat
 Clone the repository and build:
 
 ```bash
-git clone https://github.com/yourusername/libauthcekunit.git
+git clone https://github.com/neuxdotdev/libauthcekunit.git
 cd libauthcekunit
 make all        # builds static and shared library, generates C header
 sudo make install   # installs to /usr/local by default
@@ -554,7 +554,7 @@ libauthcekunit/
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/libauthcekunit.git
+   git clone https://github.com/neuxdotdev/libauthcekunit.git
    cd libauthcekunit
    ```
 
