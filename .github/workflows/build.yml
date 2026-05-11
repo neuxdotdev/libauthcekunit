@@ -1,0 +1,65 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build + Test (Rust & C)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [stable]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy, rustfmt
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Rust library (debug)
+        run: cargo build --verbose
+
+      - name: Run Rust tests
+        run: cargo test --verbose
+
+      - name: Lint with clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Check code formatting
+        run: cargo fmt --all -- --check
+
+      - name: Install cbindgen
+        run: cargo install cbindgen
+
+      - name: Generate C header
+        run: make header
+
+      - name: Build C static & shared libraries
+        run: |
+          make static
+          make dynamic
+
+      - name: Compile C test (static)
+        if: hashFiles('tests.c') != ''
+        run: make test-static
+
+      - name: Run C test (static)
+        if: hashFiles('tests.c') != ''
+        run: make test
+        env:
+          LIB_CEKUNIT_AUTH_ENV_EMAIL: ${{ secrets.TEST_EMAIL }}
+          LIB_CEKUNIT_AUTH_ENV_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_URL: ${{ secrets.TEST_LOGIN_VERIFY_URL }}
