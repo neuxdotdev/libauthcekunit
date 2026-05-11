@@ -1,10 +1,9 @@
+use crate::{
+    extract_token, fetch_cookies, fetch_token, init_logging, login, logout, CookieJar, CONFIG,
+};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
-use crate::{
-    login, logout, CookieJar, fetch_token, fetch_cookies, extract_token,
-    init_logging, CONFIG,
-};
 
 pub struct CookieJarHandle(CookieJar);
 
@@ -26,7 +25,10 @@ pub unsafe extern "C" fn libauthcekunit_login(base_url: *const c_char) -> *mut C
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libauthcekunit_logout(handle: *mut CookieJarHandle, base_url: *const c_char) -> i32 {
+pub unsafe extern "C" fn libauthcekunit_logout(
+    handle: *mut CookieJarHandle,
+    base_url: *const c_char,
+) -> i32 {
     if handle.is_null() {
         return -1;
     }
@@ -45,7 +47,9 @@ pub unsafe extern "C" fn libauthcekunit_logout(handle: *mut CookieJarHandle, bas
 #[no_mangle]
 pub unsafe extern "C" fn libauthcekunit_free_jar(handle: *mut CookieJarHandle) {
     if !handle.is_null() {
-        unsafe { drop(Box::from_raw(handle)); }
+        unsafe {
+            drop(Box::from_raw(handle));
+        }
     }
 }
 
