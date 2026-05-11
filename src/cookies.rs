@@ -108,9 +108,8 @@ impl Cookie {
                 Some(h) => h,
                 None => return false,
             };
-            if host == domain {
-            } else if host.ends_with(&format!(".{}", domain)) {
-            } else {
+            let domain_with_dot = format!(".{}", domain);
+            if host != domain && !host.ends_with(&domain_with_dot) {
                 return false;
             }
         }
@@ -118,9 +117,7 @@ impl Cookie {
             let request_path = url.path();
             if request_path == path {
             } else if request_path.starts_with(path) {
-                if !path.ends_with('/')
-                    && request_path.as_bytes().get(path.len()) != Some(&b'/')
-                {
+                if !path.ends_with('/') && request_path.as_bytes().get(path.len()) != Some(&b'/') {
                     return false;
                 }
             } else {
@@ -157,10 +154,7 @@ impl CookieJar {
         }
     }
     pub fn get_cookies_for_url(&self, url: &url::Url) -> Vec<&Cookie> {
-        self.cookies
-            .values()
-            .filter(|c| c.matches(url))
-            .collect()
+        self.cookies.values().filter(|c| c.matches(url)).collect()
     }
     pub fn cookie_header(&self, url: &url::Url) -> String {
         let cookies = self.get_cookies_for_url(url);
@@ -176,7 +170,7 @@ impl CookieJar {
     pub fn load_from_file(path: &str) -> std::io::Result<Self> {
         let data = std::fs::read_to_string(path)?;
         let mut jar: Self = serde_json::from_str(&data)?;
-        jar.clear_expired(); 
+        jar.clear_expired();
         Ok(jar)
     }
     pub fn save_to_file(&self, path: &str) -> std::io::Result<()> {

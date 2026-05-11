@@ -1,4 +1,3 @@
-
 use crate::error::{AuthError, Result};
 use once_cell::sync::Lazy;
 use std::env;
@@ -17,8 +16,8 @@ pub struct Config {
     pub user_agent: String,
     pub email: String,
     pub password: String,
-    pub login_verify_url: String,   
-    pub login_verify_text: String,  
+    pub login_verify_url: String,
+    pub login_verify_text: String,
 }
 impl Config {
     pub fn from_env() -> Result<Self> {
@@ -29,17 +28,25 @@ impl Config {
         }
         debug!("Loading environment variables (email/password hidden)");
         let parse_u64 = |key: &str, default: u64| -> u64 {
-            env::var(key).ok().and_then(|v| v.parse().ok()).unwrap_or(default)
+            env::var(key)
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(default)
         };
         let parse_u32 = |key: &str, default: u32| -> u32 {
-            env::var(key).ok().and_then(|v| v.parse().ok()).unwrap_or(default)
+            env::var(key)
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(default)
         };
         let parse_bool = |key: &str, default: bool| -> bool {
-            env::var(key).ok().and_then(|v| v.parse().ok()).unwrap_or(default)
+            env::var(key)
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(default)
         };
-        let parse_string = |key: &str, default: String| -> String {
-            env::var(key).unwrap_or(default)
-        };
+        let parse_string =
+            |key: &str, default: String| -> String { env::var(key).unwrap_or(default) };
         Ok(Config {
             request_timeout_secs: parse_u64("LIB_CEKUNIT_AUTH_ENV_TIMEOUT_SECS", 30),
             max_retries: parse_u32("LIB_CEKUNIT_AUTH_ENV_MAX_RETRIES", 3),
@@ -53,11 +60,20 @@ impl Config {
                 .try_into()
                 .map_err(|_| AuthError::Config("max length too large".into()))?,
             log_level: parse_string("RUST_LOG", "info".to_string()),
-            user_agent: parse_string("LIB_CEKUNIT_AUTH_ENV_USER_AGENT", "LIB_CEKUNIT_AUTH_ENVUnit/2.0".to_string()),
+            user_agent: parse_string(
+                "LIB_CEKUNIT_AUTH_ENV_USER_AGENT",
+                "LIB_CEKUNIT_AUTH_ENVUnit/2.0".to_string(),
+            ),
             email: parse_string("LIB_CEKUNIT_AUTH_ENV_EMAIL", "".to_string()),
             password: parse_string("LIB_CEKUNIT_AUTH_ENV_PASSWORD", "".to_string()),
-            login_verify_url: parse_string("LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_URL", "/dashboard".to_string()),
-            login_verify_text: parse_string("LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_TEXT", "".to_string()),
+            login_verify_url: parse_string(
+                "LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_URL",
+                "/dashboard".to_string(),
+            ),
+            login_verify_text: parse_string(
+                "LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_TEXT",
+                "".to_string(),
+            ),
         })
     }
 }

@@ -1,4 +1,3 @@
-
 pub mod auth;
 pub mod client;
 pub mod config;
@@ -8,12 +7,12 @@ pub mod logging;
 pub mod parser;
 pub mod types;
 pub use auth::{login, logout};
+pub use config::CONFIG;
 pub use cookies::CookieJar;
 pub use error::{AuthError, Result};
-pub use types::{CsrfToken, FetchOptions};
-pub use config::CONFIG;
 pub use logging::init_logging;
 pub use parser::extract_token;
+pub use types::{CsrfToken, FetchOptions};
 pub mod ffi;
 use tracing::info;
 pub fn fetch_token_and_cookies(url: &str) -> Result<(String, CookieJar)> {

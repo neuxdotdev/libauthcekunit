@@ -22,7 +22,7 @@ impl RobustHttpClient {
             })
             .cookie_store(false)
             .build()
-            .map_err(|e| AuthError::Http(e))?;
+            .map_err(AuthError::Http)?;
         Ok(Self { inner: client })
     }
     pub fn get(&self, url: &str, cookies: &CookieJar) -> Result<(String, CookieJar)> {

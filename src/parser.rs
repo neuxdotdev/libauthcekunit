@@ -47,7 +47,7 @@ fn manual_extract(html: &str) -> Option<String> {
         }
         let end = after[1..].find(quote)?;
         let token = &after[1..=end];
-        let ctx_start = if abs > 200 { abs - 200 } else { 0 };
+        let ctx_start = abs.saturating_sub(200);
         let context = &html[ctx_start..abs];
         if context.contains("name=\"_token\"") || context.contains("name='_token'") {
             return Some(token.to_string());
