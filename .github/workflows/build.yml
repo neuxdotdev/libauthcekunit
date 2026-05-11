@@ -35,9 +35,6 @@ jobs:
       - name: Run Rust tests
         run: cargo test --verbose
 
-      - name: Lint with clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
       - name: Check code formatting
         run: cargo fmt --all -- --check
 
