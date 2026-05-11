@@ -17,6 +17,8 @@ pub struct Config {
     pub user_agent: String,
     pub email: String,
     pub password: String,
+    pub login_verify_url: String,   
+    pub login_verify_text: String,  
 }
 impl Config {
     pub fn from_env() -> Result<Self> {
@@ -54,6 +56,8 @@ impl Config {
             user_agent: parse_string("LIB_CEKUNIT_AUTH_ENV_USER_AGENT", "LIB_CEKUNIT_AUTH_ENVUnit/2.0".to_string()),
             email: parse_string("LIB_CEKUNIT_AUTH_ENV_EMAIL", "".to_string()),
             password: parse_string("LIB_CEKUNIT_AUTH_ENV_PASSWORD", "".to_string()),
+            login_verify_url: parse_string("LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_URL", "/dashboard".to_string()),
+            login_verify_text: parse_string("LIB_CEKUNIT_AUTH_ENV_LOGIN_VERIFY_TEXT", "".to_string()),
         })
     }
 }
