@@ -4,6 +4,13 @@ version = "2.0.0"
 edition = "2021"
 description = "Super robust CSRF token extractor with configurable retry, logging, and strict validation"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/neuxdotdev/libauthcekunit"
+homepage = "https://github.com/neuxdotdev/libauthcekunit"
+documentation = "https://docs.rs/libauthcekunit"
+keywords = ["csrf", "token", "extractor", "authentication", "cookie"]
+categories = ["web-programming", "authentication", "command-line-utilities"]
+exclude = ["/a", ".env.example", "tests.c"]
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
@@ -30,3 +37,13 @@ tempfile = "3.27.0"
 default = ["rustls"]
 rustls = ["reqwest/rustls"]
 native-tls = ["reqwest/native-tls"]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
