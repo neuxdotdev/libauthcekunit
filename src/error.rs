@@ -19,5 +19,7 @@ pub enum AuthError {
     MaxRetriesExceeded,
     #[error("Unexpected HTTP status: {0}")]
     HttpStatus(u16),
+    #[error("Login failed: {0}")]
+    LoginFailed(String),
 }
 pub type Result<T> = std::result::Result<T, AuthError>;
